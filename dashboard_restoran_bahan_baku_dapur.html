@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Restoran - Manajemen Bahan Baku Dapur</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar for better UI */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-emerald-600 text-white p-2.5 rounded-xl shadow-md shadow-emerald-200">
+                    <i class="fa-solid fa-utensils text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-800 text-lg sm:text-xl leading-tight">DapurUtama Resto</h1>
+                    <p class="text-xs text-slate-500 hidden sm:block">Sistem Manajemen Stok Bahan Baku Dapur</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <button onclick="toggleReadmeModal()" class="flex items-center space-x-1.5 text-xs sm:text-sm text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-2 rounded-lg font-medium transition border border-emerald-200">
+                    <i class="fa-solid fa-book-open"></i>
+                    <span class="hidden sm:inline">Panduan & Logic README</span>
+                    <span class="sm:hidden">README</span>
+                </button>
+                <button onclick="resetToInitialData()" class="flex items-center space-x-1.5 text-xs sm:text-sm text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-lg font-medium transition" title="Reset data ke awal">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span class="hidden md:inline">Reset Seed Data</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Banner Welcome & Info -->
+        <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-10 text-white">
+                <i class="fa-solid fa-kitchen-set text-[180px]"></i>
+            </div>
+            <div class="relative z-10 max-w-2xl">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-2">
+                    Soal A — Dashboard Restoran
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-bold tracking-tight">Monitor & Kelola Stok Bahan Dapur</h2>
+                <p class="text-slate-300 text-sm mt-1">Pantau ketersediaan bahan baku resep restoran secara real-time untuk mencegah kekurangan stok saat jam operasional sibuk.</p>
+            </div>
+        </div>
+
+        <!-- 4 Summary Tiles / Cards (Computed dynamically) -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Tile 1: Total Jenis Bahan Baku -->
+            <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Bahan Baku</p>
+                        <h3 id="tile-total-bahan" class="text-2xl sm:text-3xl font-extrabold text-slate-800 mt-1">0</h3>
+                        <p class="text-xs text-slate-400 mt-1">Jenis item terdaftar</p>
+                    </div>
+                    <div class="bg-blue-50 text-blue-600 p-3.5 rounded-xl">
+                        <i class="fa-solid fa-boxes-stacked text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tile 2: Stok Menipis & Habis -->
+            <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Perlu Re-Order</p>
+                        <h3 id="tile-stok-kritis" class="text-2xl sm:text-3xl font-extrabold text-amber-600 mt-1">0</h3>
+                        <p class="text-xs text-slate-400 mt-1"><span id="tile-habis-count" class="text-red-500 font-semibold">0 habis</span>, <span id="tile-menipis-count" class="text-amber-500 font-semibold">0 menipis</span></p>
+                    </div>
+                    <div class="bg-amber-50 text-amber-600 p-3.5 rounded-xl">
+                        <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tile 3: Jumlah Kategori Unik -->
+            <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Jumlah Kategori</p>
+                        <h3 id="tile-total-kategori" class="text-2xl sm:text-3xl font-extrabold text-slate-800 mt-1">0</h3>
+                        <p class="text-xs text-slate-400 mt-1">Kategori unik dapur</p>
+                    </div>
+                    <div class="bg-indigo-50 text-indigo-600 p-3.5 rounded-xl">
+                        <i class="fa-solid fa-layer-group text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tile 4: Total Satuan Kuantitas Stok -->
+            <div class="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Kuantitas Stok</p>
+                        <h3 id="tile-total-stok" class="text-2xl sm:text-3xl font-extrabold text-slate-800 mt-1">0</h3>
+                        <p class="text-xs text-slate-400 mt-1">Akurasi gabungan unit</p>
+                    </div>
+                    <div class="bg-emerald-50 text-emerald-600 p-3.5 rounded-xl">
+                        <i class="fa-solid fa-cubes text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Control Bar: Search, Filter, Sort & Add Button -->
+        <section class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm space-y-4">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                
+                <!-- Search Box -->
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="search-input" 
+                        placeholder="Cari berdasarkan nama bahan atau kategori..." 
+                        class="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                        oninput="handleFilterChange()"
+                    >
+                    <button 
+                        id="clear-search-btn"
+                        onclick="clearSearch()" 
+                        class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Filters & Action Buttons -->
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                    
+                    <!-- Filter Kategori -->
+                    <div class="relative min-w-[140px] flex-1 sm:flex-none">
+                        <select 
+                            id="category-filter" 
+                            onchange="handleFilterChange()" 
+                            class="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-700 pr-8 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+                            <option value="ALL">Semua Kategori</option>
+                            <!-- Kategori populated dynamically -->
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </div>
+                    </div>
+
+                    <!-- Filter Status Stok -->
+                    <div class="relative min-w-[130px] flex-1 sm:flex-none">
+                        <select 
+                            id="status-filter" 
+                            onchange="handleFilterChange()" 
+                            class="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-700 pr-8 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+                            <option value="ALL">Semua Status</option>
+                            <option value="AMAN">Stok Aman (>10)</option>
+                            <option value="MENIPIS">Stok Menipis (1-10)</option>
+                            <option value="HABIS">Stok Habis (0)</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </div>
+                    </div>
+
+                    <!-- Sort Option -->
+                    <div class="relative min-w-[140px] flex-1 sm:flex-none">
+                        <select 
+                            id="sort-option" 
+                            onchange="handleFilterChange()" 
+                            class="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-700 pr-8 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+                            <option value="NAME_ASC">Nama (A - Z)</option>
+                            <option value="NAME_DESC">Nama (Z - A)</option>
+                            <option value="STOCK_ASC">Stok Terkecil</option>
+                            <option value="STOCK_DESC">Stok Terbanyak</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-arrow-down-a-z text-xs"></i>
+                        </div>
+                    </div>
+
+                    <!-- Button Tambah -->
+                    <button 
+                        onclick="openAddModal()" 
+                        class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-4 py-2.5 rounded-xl font-semibold text-xs sm:text-sm shadow-md shadow-emerald-200 flex items-center justify-center space-x-2 transition">
+                        <i class="fa-solid fa-plus text-sm"></i>
+                        <span>Tambah Bahan</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Category Badges Bar -->
+            <div id="quick-categories-bar" class="flex items-center space-x-2 overflow-x-auto pb-1 pt-1 text-xs no-scrollbar">
+                <span class="text-slate-400 font-medium whitespace-nowrap">Filter Cepat:</span>
+                <!-- Dynamic Quick Badges -->
+            </div>
+        </section>
+
+        <!-- Table Data Section -->
+        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+            <!-- Table Header Bar -->
+            <div class="px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/50">
+                <div class="flex items-center space-x-2">
+                    <h3 class="font-bold text-slate-800">Daftar Bahan Baku</h3>
+                    <span id="showing-count-badge" class="bg-slate-200 text-slate-700 text-xs px-2.5 py-0.5 rounded-full font-medium">0 Data</span>
+                </div>
+                <div class="text-xs text-slate-500">
+                    Klik tombol aksi pada tabel untuk mengedit atau menghapus data.
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100/70 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold text-slate-600">
+                            <th class="py-3.5 px-6">ID</th>
+                            <th class="py-3.5 px-6">Nama Bahan Baku</th>
+                            <th class="py-3.5 px-6">Kategori</th>
+                            <th class="py-3.5 px-6 text-right">Jumlah Stok</th>
+                            <th class="py-3.5 px-6 text-center">Status Stok</th>
+                            <th class="py-3.5 px-6 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="materials-tbody" class="divide-y divide-slate-100 text-sm text-slate-700">
+                        <!-- Data rows will be injected here via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State Container -->
+            <div id="empty-state" class="hidden py-12 px-4 text-center">
+                <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fa-solid fa-box-open text-2xl"></i>
+                </div>
+                <h4 class="font-bold text-slate-700 text-base">Bahan Baku Tidak Ditemukan</h4>
+                <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1">Coba sesuaikan kata kunci pencarian atau ubah filter kategori yang dipilih.</p>
+                <button onclick="resetFilters()" class="mt-4 inline-flex items-center space-x-1.5 text-xs text-emerald-600 hover:text-emerald-700 font-semibold bg-emerald-50 px-3 py-2 rounded-lg">
+                    <i class="fa-solid fa-filter-circle-xmark"></i>
+                    <span>Reset Semua Filter</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-6 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4">
+            <p><strong>Dashboard Restoran (Bahan Baku Dapur)</strong> — Tugas Praktikum Pemrograman Web (Soal A / NIM Ganjil)</p>
+            <p class="mt-1 text-slate-400">Implementasi Pure HTML, Tailwind CSS, JavaScript (Vanilla ES6), & LocalStorage.</p>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: Form Add / Edit Material -->
+    <div id="material-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 w-full max-w-md overflow-hidden transform transition-all">
+            
+            <!-- Modal Header -->
+            <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i id="modal-icon" class="fa-solid fa-plus text-emerald-400"></i>
+                    <h3 id="modal-title" class="font-bold text-base">Tambah Bahan Baku Baru</h3>
+                </div>
+                <button onclick="closeMaterialModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Form -->
+            <form id="material-form" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="form-id">
+
+                <!-- Input Nama Bahan -->
+                <div>
+                    <label for="form-nama" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Nama Bahan Baku <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="form-nama" 
+                        required 
+                        placeholder="Contoh: Daging Sapi Tenderloin, Bawang Merah"
+                        class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                </div>
+
+                <!-- Input Kategori -->
+                <div>
+                    <label for="form-kategori" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Kategori <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="form-kategori" 
+                            list="kategori-list" 
+                            required 
+                            placeholder="Pilih atau ketik kategori baru (cth: Daging, Sayuran)"
+                            class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                        <datalist id="kategori-list">
+                            <option value="Sayuran"></option>
+                            <option value="Daging & Unggas"></option>
+                            <option value="Seafood"></option>
+                            <option value="Bumbu & Rempah"></option>
+                            <option value="Minyak & Cairan"></option>
+                            <option value="Produk Olahan"></option>
+                            <option value="Susu & Olahan Dairy"></option>
+                            <option value="Buah-Buahan"></option>
+                            <option value="Tepung & Beras"></option>
+                        </datalist>
+                    </div>
+                </div>
+
+                <!-- Input Stok & Satuan (Grid 2 Kolom) -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="form-stok" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Jumlah Stok <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="number" 
+                            id="form-stok" 
+                            min="0" 
+                            step="any"
+                            required 
+                            placeholder="0"
+                            class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                    </div>
+
+                    <div>
+                        <label for="form-satuan" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Satuan <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="form-satuan" 
+                            list="satuan-list" 
+                            required 
+                            placeholder="kg, pcs, liter, dll"
+                            class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                        <datalist id="satuan-list">
+                            <option value="kg"></option>
+                            <option value="gram"></option>
+                            <option value="liter"></option>
+                            <option value="ml"></option>
+                            <option value="pcs"></option>
+                            <option value="ikat"></option>
+                            <option value="botol"></option>
+                            <option value="kaleng"></option>
+                            <option value="pack"></option>
+                        </datalist>
+                    </div>
+                </div>
+
+                <!-- Info Preview Status Stok -->
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-start space-x-2">
+                    <i class="fa-solid fa-circle-info text-emerald-600 mt-0.5"></i>
+                    <div>
+                        <span class="font-semibold block text-slate-700">Aturan Status Stok:</span>
+                        <span>• Stok 0 = <strong class="text-red-600">Habis</strong> | 1-10 = <strong class="text-amber-600">Menipis</strong> | >10 = <strong class="text-emerald-600">Aman</strong></span>
+                    </div>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="flex items-center justify-end space-x-2 pt-2">
+                    <button 
+                        type="button" 
+                        onclick="closeMaterialModal()" 
+                        class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-medium text-xs sm:text-sm transition">
+                        Batal
+                    </button>
+                    <button 
+                        type="submit" 
+                        class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm shadow-md transition">
+                        Simpan Data
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: README / Logic Documentation -->
+    <div id="readme-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            <!-- Header -->
+            <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-book-open text-emerald-400"></i>
+                    <h3 class="font-bold text-base">Panduan Spesifikasi & Penjelasan Logika (README)</h3>
+                </div>
+                <button onclick="toggleReadmeModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <!-- Body Content -->
+            <div class="p-6 overflow-y-auto space-y-5 text-sm text-slate-700 leading-relaxed">
+                <div>
+                    <h4 class="font-bold text-slate-900 text-base mb-1 border-b pb-1">1. Entitas Bahan Baku Dapur</h4>
+                    <p class="text-xs text-slate-600">Setiap data bahan baku disimpan dengan struktur objek berikut:</p>
+                    <code class="block bg-slate-900 text-emerald-400 p-3 rounded-lg text-xs font-mono mt-2 overflow-x-auto">
+{ id: "BB-001", nama_bahan: "Daging Sapi Tenderloin", kategori: "Daging & Unggas", stok: 15, satuan: "kg" }
+                    </code>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 text-base mb-1 border-b pb-1">2. Aturan Ambang Batas Status Stok (Threshold Rules)</h4>
+                    <p class="text-xs text-slate-600 mb-2">Penentuan status dilakukan secara real-time berdasarkan angka pada attribute <code class="bg-slate-100 text-slate-800 px-1 py-0.5 rounded">stok</code>:</p>
+                    <ul class="space-y-2 text-xs">
+                        <li class="flex items-start space-x-2">
+                            <span class="inline-block px-2 py-0.5 bg-red-100 text-red-700 rounded font-bold border border-red-200">Stok Habis</span>
+                            <span><strong>Stok = 0</strong>: Bahan baku benar-benar kosong di gudang dapur. Harus segera di-order agar menu terkait tidak *off-menu*.</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="inline-block px-2 py-0.5 bg-amber-100 text-amber-700 rounded font-bold border border-amber-200">Stok Menipis</span>
+                            <span><strong>Stok 1 s/d 10</strong>: Menyentuh batas minimum persediaan (Re-order point). Memberikan peringatan dini bagi chef/purchasing.</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="inline-block px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded font-bold border border-emerald-200">Stok Aman</span>
+                            <span><strong>Stok > 10</strong>: Kuantitas persediaan mencukupi untuk kelancaran operasional dapur harian.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 text-base mb-1 border-b pb-1">3. Formula Perhitungan 4 Tile Ringkasan (Computed)</h4>
+                    <ul class="list-disc pl-5 space-y-1 text-xs text-slate-600">
+                        <li><strong>Total Bahan Baku:</strong> Total `length` array data bahan baku.</li>
+                        <li><strong>Stok Menipis + Habis:</strong> Jumlah item yang memiliki status `MENIPIS` (stok 1-10) atau `HABIS` (stok 0).</li>
+                        <li><strong>Jumlah Kategori:</strong> Hitungan `Set` unik dari attribute `kategori`.</li>
+                        <li><strong>Total Satuan Stok:</strong> Penjumlahan (`sum / reduce`) seluruh angka kuantitas stok bahan baku.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 text-base mb-1 border-b pb-1">4. Fitur Tambahan</h4>
+                    <p class="text-xs text-slate-600">Aplikasi dilengkapi dengan penyimpanan `localStorage` otomatis. Ketika Anda menambah, mengedit, atau menghapus bahan baku, data akan tersimpan secara otomatis di peramban web Anda.</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 text-right">
+                <button onclick="toggleReadmeModal()" class="px-4 py-2 bg-slate-800 text-white font-medium text-xs rounded-xl hover:bg-slate-900 transition">
+                    Tutup Panduan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Box -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // ==========================================
+        // 1. SEED DATA AWAL (Minimal 20 Data Bahan Baku)
+        // ==========================================
+        const INITIAL_SEED_DATA = [
+            { id: "BB-001", nama_bahan: "Daging Sapi Tenderloin", kategori: "Daging & Unggas", stok: 18, satuan: "kg" },
+            { id: "BB-002", nama_bahan: "Dada Ayam Fillet", kategori: "Daging & Unggas", stok: 8, satuan: "kg" },
+            { id: "BB-003", nama_bahan: "Bawang Merah Jumbo", kategori: "Bumbu & Rempah", stok: 25, satuan: "kg" },
+            { id: "BB-004", nama_bahan: "Bawang Putih Honan", kategori: "Bumbu & Rempah", stok: 4, satuan: "kg" },
+            { id: "BB-005", nama_bahan: "Cabai Rawit Merah", kategori: "Sayuran", stok: 0, satuan: "kg" },
+            { id: "BB-006", nama_bahan: "Minyak Goreng Kelapa Sawit", kategori: "Minyak & Cairan", stok: 45, satuan: "liter" },
+            { id: "BB-007", nama_bahan: "Beras Putih Premium", kategori: "Tepung & Beras", stok: 120, satuan: "kg" },
+            { id: "BB-008", nama_bahan: "Tepung Terigu Cakra Kembar", kategori: "Tepung & Beras", stok: 30, satuan: "kg" },
+            { id: "BB-009", nama_bahan: "Susu UHT Full Cream", kategori: "Susu & Olahan Dairy", stok: 6, satuan: "liter" },
+            { id: "BB-010", nama_bahan: "Keju Mozzarella Import", kategori: "Susu & Olahan Dairy", stok: 3, satuan: "kg" },
+            { id: "BB-011", nama_bahan: "Udang Vaname Segar", kategori: "Seafood", stok: 0, satuan: "kg" },
+            { id: "BB-012", nama_bahan: "Ikan Salmon Fillet", kategori: "Seafood", stok: 12, satuan: "kg" },
+            { id: "BB-013", nama_bahan: "Saus Tiram Lee Kum Kee", kategori: "Produk Olahan", stok: 15, satuan: "botol" },
+            { id: "BB-014", nama_bahan: "Kecap Manis Bango", kategori: "Produk Olahan", stok: 20, satuan: "botol" },
+            { id: "BB-015", nama_bahan: "Tomat Merah Segar", kategori: "Sayuran", stok: 9, satuan: "kg" },
+            { id: "BB-016", nama_bahan: "Daun Bawang & Seledri", kategori: "Sayuran", stok: 2, satuan: "ikat" },
+            { id: "BB-017", nama_bahan: "Garam Halus Beriodium", kategori: "Bumbu & Rempah", stok: 15, satuan: "kg" },
+            { id: "BB-018", nama_bahan: "Gula Pasir Kristal", kategori: "Bumbu & Rempah", stok: 0, satuan: "kg" },
+            { id: "BB-019", nama_bahan: "Mentega / Butter Anchor", kategori: "Susu & Olahan Dairy", stok: 14, satuan: "kg" },
+            { id: "BB-020", nama_bahan: "Telur Ayam Negeri", kategori: "Daging & Unggas", stok: 150, satuan: "pcs" },
+            { id: "BB-021", nama_bahan: "Jeruk Nipis Segar", kategori: "Buah-Buahan", stok: 5, satuan: "kg" },
+            { id: "BB-022", nama_bahan: "Jamur Tiram Segar", kategori: "Sayuran", stok: 7, satuan: "kg" }
+        ];
+
+        // State Utama Aplikasi
+        let materials = [];
+        let selectedCategoryFilter = "ALL";
+
+        // LocalStorage Key
+        const STORAGE_KEY = "RESTAURANT_KITCHEN_MATERIALS_DATA_V1";
+
+        // ==========================================
+        // 2. INISIALISASI APLIKASI
+        // ==========================================
+        window.onload = function() {
+            loadDataFromStorage();
+            renderDashboard();
+        };
+
+        function loadDataFromStorage() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                try {
+                    materials = JSON.parse(savedData);
+                } catch (e) {
+                    console.error("Gagal parsing localStorage, mengembalikan ke seed data awal", e);
+                    materials = [...INITIAL_SEED_DATA];
+                    saveDataToStorage();
+                }
+            } else {
+                materials = [...INITIAL_SEED_DATA];
+                saveDataToStorage();
+            }
+        }
+
+        function saveDataToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(materials));
+        }
+
+        function resetToInitialData() {
+            if (confirm("Apakah Anda yakin ingin mengembalikan data ke 22 item awal (seed data)? Perubahan yang Anda buat akan di-reset.")) {
+                materials = [...INITIAL_SEED_DATA];
+                saveDataToStorage();
+                renderDashboard();
+                showToast("Data berhasil di-reset ke data awal!", "info");
+            }
+        }
+
+        // ==========================================
+        // 3. LOGIKA AMBANG BATAS & COMPUTED PROPERTIES
+        // ==========================================
+        function getStockStatus(stok) {
+            const numStok = Number(stok);
+            if (numStok === 0) {
+                return {
+                    code: "HABIS",
+                    label: "Stok Habis",
+                    badgeClass: "bg-red-100 text-red-700 border-red-200",
+                    dotClass: "bg-red-500"
+                };
+            } else if (numStok > 0 && numStok <= 10) {
+                return {
+                    code: "MENIPIS",
+                    label: "Stok Menipis",
+                    badgeClass: "bg-amber-100 text-amber-800 border-amber-200",
+                    dotClass: "bg-amber-500"
+                };
+            } else {
+                return {
+                    code: "AMAN",
+                    label: "Stok Aman",
+                    badgeClass: "bg-emerald-100 text-emerald-800 border-emerald-200",
+                    dotClass: "bg-emerald-500"
+                };
+            }
+        }
+
+        // ==========================================
+        // 4. RENDER UTAMA & COMPUTED TILES
+        // ==========================================
+        function renderDashboard() {
+            updateSummaryTiles();
+            populateCategoryFilterOptions();
+            renderTableData();
+            renderQuickCategoriesBar();
+        }
+
+        function updateSummaryTiles() {
+            // Computed Tile 1: Total Jenis Bahan
+            const totalJenis = materials.length;
+            document.getElementById("tile-total-bahan").textContent = totalJenis.toLocaleString("id-ID");
+
+            // Computed Tile 2: Stok Menipis + Habis
+            const habisItems = materials.filter(item => Number(item.stok) === 0);
+            const menipisItems = materials.filter(item => Number(item.stok) > 0 && Number(item.stok) <= 10);
+            const totalKritis = habisItems.length + menipisItems.length;
+
+            document.getElementById("tile-stok-kritis").textContent = totalKritis.toLocaleString("id-ID");
+            document.getElementById("tile-habis-count").textContent = `${habisItems.length} habis`;
+            document.getElementById("tile-menipis-count").textContent = `${menipisItems.length} menipis`;
+
+            // Computed Tile 3: Jumlah Kategori Unik
+            const uniqueCategories = new Set(materials.map(item => item.kategori.trim()));
+            document.getElementById("tile-total-kategori").textContent = uniqueCategories.size.toLocaleString("id-ID");
+
+            // Computed Tile 4: Total Satuan Kuantitas Stok (Sum of all stock numbers)
+            const totalKuantitasStok = materials.reduce((acc, curr) => acc + Number(curr.stok), 0);
+            document.getElementById("tile-total-stok").textContent = Math.round(totalKuantitasStok * 100) / 100;
+        }
+
+        function populateCategoryFilterOptions() {
+            const categorySelect = document.getElementById("category-filter");
+            const currentValue = categorySelect.value;
+            
+            // Ambil semua kategori unik
+            const categories = Array.from(new Set(materials.map(item => item.kategori.trim()))).sort();
+
+            let optionsHtml = `<option value="ALL">Semua Kategori</option>`;
+            categories.forEach(cat => {
+                const selected = cat === currentValue ? "selected" : "";
+                optionsHtml += `<option value="${cat}" ${selected}>${cat}</option>`;
+            });
+
+            categorySelect.innerHTML = optionsHtml;
+        }
+
+        function renderQuickCategoriesBar() {
+            const container = document.getElementById("quick-categories-bar");
+            const categories = Array.from(new Set(materials.map(item => item.kategori.trim()))).sort();
+
+            let html = `
+                <span class="text-slate-400 font-medium whitespace-nowrap">Filter Cepat:</span>
+                <button onclick="quickFilterCategory('ALL')" class="px-2.5 py-1 rounded-lg border text-xs font-medium transition ${selectedCategoryFilter === 'ALL' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'}">
+                    Semua (${materials.length})
+                </button>
+            `;
+
+            categories.forEach(cat => {
+                const count = materials.filter(m => m.kategori === cat).length;
+                const isSelected = selectedCategoryFilter === cat;
+                html += `
+                    <button onclick="quickFilterCategory('${cat}')" class="px-2.5 py-1 rounded-lg border text-xs font-medium whitespace-nowrap transition ${isSelected ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'}">
+                        ${cat} (${count})
+                    </button>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function quickFilterCategory(cat) {
+            selectedCategoryFilter = cat;
+            document.getElementById("category-filter").value = cat;
+            renderTableData();
+            renderQuickCategoriesBar();
+        }
+
+        // ==========================================
+        // 5. FILTERING, SEARCHING & SORTING TABLE
+        // ==========================================
+        function handleFilterChange() {
+            selectedCategoryFilter = document.getElementById("category-filter").value;
+            const searchVal = document.getElementById("search-input").value;
+            const clearBtn = document.getElementById("clear-search-btn");
+
+            if (searchVal.trim() !== "") {
+                clearBtn.classList.remove("hidden");
+            } else {
+                clearBtn.classList.add("hidden");
+            }
+
+            renderTableData();
+            renderQuickCategoriesBar();
+        }
+
+        function clearSearch() {
+            document.getElementById("search-input").value = "";
+            document.getElementById("clear-search-btn").classList.add("hidden");
+            renderTableData();
+        }
+
+        function resetFilters() {
+            document.getElementById("search-input").value = "";
+            document.getElementById("category-filter").value = "ALL";
+            document.getElementById("status-filter").value = "ALL";
+            document.getElementById("sort-option").value = "NAME_ASC";
+            selectedCategoryFilter = "ALL";
+            handleFilterChange();
+        }
+
+        function getFilteredAndSortedData() {
+            const searchQuery = document.getElementById("search-input").value.toLowerCase().trim();
+            const categoryFilter = document.getElementById("category-filter").value;
+            const statusFilter = document.getElementById("status-filter").value;
+            const sortOption = document.getElementById("sort-option").value;
+
+            // 1. Filter
+            let filtered = materials.filter(item => {
+                // Search Match (nama_bahan ATAU kategori)
+                const matchSearch = item.nama_bahan.toLowerCase().includes(searchQuery) || 
+                                    item.kategori.toLowerCase().includes(searchQuery);
+
+                // Category Match
+                const matchCategory = (categoryFilter === "ALL") || (item.kategori === categoryFilter);
+
+                // Status Match
+                const status = getStockStatus(item.stok).code;
+                const matchStatus = (statusFilter === "ALL") || (status === statusFilter);
+
+                return matchSearch && matchCategory && matchStatus;
+            });
+
+            // 2. Sort
+            filtered.sort((a, b) => {
+                if (sortOption === "NAME_ASC") {
+                    return a.nama_bahan.localeCompare(b.nama_bahan, 'id', { sensitivity: 'base' });
+                } else if (sortOption === "NAME_DESC") {
+                    return b.nama_bahan.localeCompare(a.nama_bahan, 'id', { sensitivity: 'base' });
+                } else if (sortOption === "STOCK_ASC") {
+                    return Number(a.stok) - Number(b.stok);
+                } else if (sortOption === "STOCK_DESC") {
+                    return Number(b.stok) - Number(a.stok);
+                }
+                return 0;
+            });
+
+            return filtered;
+        }
+
+        function renderTableData() {
+            const tbody = document.getElementById("materials-tbody");
+            const emptyState = document.getElementById("empty-state");
+            const countBadge = document.getElementById("showing-count-badge");
+
+            const filteredData = getFilteredAndSortedData();
+            countBadge.textContent = `${filteredData.length} dari ${materials.length} Data`;
+
+            if (filteredData.length === 0) {
+                tbody.innerHTML = "";
+                emptyState.classList.remove("hidden");
+                return;
+            }
+
+            emptyState.classList.add("hidden");
+
+            let rowsHtml = "";
+            filteredData.forEach(item => {
+                const statusInfo = getStockStatus(item.stok);
+
+                rowsHtml += `
+                    <tr class="hover:bg-slate-50/80 transition group">
+                        <td class="py-3.5 px-6 font-mono text-xs font-semibold text-slate-500">${item.id}</td>
+                        <td class="py-3.5 px-6 font-semibold text-slate-800">
+                            ${item.nama_bahan}
+                        </td>
+                        <td class="py-3.5 px-6">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                                ${item.kategori}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-6 text-right font-bold text-slate-800">
+                            ${Number(item.stok).toLocaleString("id-ID")} <span class="text-xs font-normal text-slate-500">${item.satuan}</span>
+                        </td>
+                        <td class="py-3.5 px-6 text-center">
+                            <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold border ${statusInfo.badgeClass}">
+                                <span class="w-1.5 h-1.5 rounded-full ${statusInfo.dotClass}"></span>
+                                <span>${statusInfo.label}</span>
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-6 text-center">
+                            <div class="flex items-center justify-center space-x-1">
+                                <button 
+                                    onclick="openEditModal('${item.id}')" 
+                                    class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition" 
+                                    title="Edit Bahan Baku">
+                                    <i class="fa-solid fa-pen-to-square text-sm"></i>
+                                </button>
+                                <button 
+                                    onclick="deleteMaterial('${item.id}')" 
+                                    class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition" 
+                                    title="Hapus Bahan Baku">
+                                    <i class="fa-solid fa-trash-can text-sm"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = rowsHtml;
+        }
+
+        // ==========================================
+        // 6. CRUD MODAL & FORM HANDLERS
+        // ==========================================
+        function openAddModal() {
+            document.getElementById("modal-title").textContent = "Tambah Bahan Baku Baru";
+            document.getElementById("modal-icon").className = "fa-solid fa-plus text-emerald-400";
+            document.getElementById("material-form").reset();
+            document.getElementById("form-id").value = "";
+            document.getElementById("material-modal").classList.remove("hidden");
+        }
+
+        function openEditModal(id) {
+            const item = materials.find(m => m.id === id);
+            if (!item) return;
+
+            document.getElementById("modal-title").textContent = "Edit Bahan Baku (" + item.id + ")";
+            document.getElementById("modal-icon").className = "fa-solid fa-pen-to-square text-amber-400";
+            
+            document.getElementById("form-id").value = item.id;
+            document.getElementById("form-nama").value = item.nama_bahan;
+            document.getElementById("form-kategori").value = item.kategori;
+            document.getElementById("form-stok").value = item.stok;
+            document.getElementById("form-satuan").value = item.satuan;
+
+            document.getElementById("material-modal").classList.remove("hidden");
+        }
+
+        function closeMaterialModal() {
+            document.getElementById("material-modal").classList.add("hidden");
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const editId = document.getElementById("form-id").value;
+            const nama = document.getElementById("form-nama").value.trim();
+            const kategori = document.getElementById("form-kategori").value.trim();
+            const stok = parseFloat(document.getElementById("form-stok").value);
+            const satuan = document.getElementById("form-satuan").value.trim();
+
+            if (!nama || !kategori || isNaN(stok) || !satuan) {
+                showToast("Mohon isi seluruh field formulir!", "error");
+                return;
+            }
+
+            if (editId) {
+                // Update
+                const index = materials.findIndex(m => m.id === editId);
+                if (index !== -1) {
+                    materials[index] = {
+                        ...materials[index],
+                        nama_bahan: nama,
+                        kategori: kategori,
+                        stok: stok,
+                        satuan: satuan
+                    };
+                    showToast(`Bahan baku "${nama}" berhasil diperbarui!`, "success");
+                }
+            } else {
+                // Create New ID
+                const newNum = materials.length > 0 ? Math.max(...materials.map(m => parseInt(m.id.replace("BB-", "")) || 0)) + 1 : 1;
+                const newId = `BB-${String(newNum).padStart(3, '0')}`;
+
+                const newItem = {
+                    id: newId,
+                    nama_bahan: nama,
+                    kategori: kategori,
+                    stok: stok,
+                    satuan: satuan
+                };
+
+                materials.unshift(newItem); // Tambahkan ke paling atas
+                showToast(`Bahan baku "${nama}" berhasil ditambahkan!`, "success");
+            }
+
+            saveDataToStorage();
+            renderDashboard();
+            closeMaterialModal();
+        }
+
+        function deleteMaterial(id) {
+            const item = materials.find(m => m.id === id);
+            if (!item) return;
+
+            if (confirm(`Apakah Anda yakin ingin menghapus "${item.nama_bahan}" (${item.id})?`)) {
+                materials = materials.filter(m => m.id !== id);
+                saveDataToStorage();
+                renderDashboard();
+                showToast(`Bahan baku "${item.nama_bahan}" telah dihapus!`, "info");
+            }
+        }
+
+        // ==========================================
+        // 7. UTILITIES: README MODAL & TOAST NOTIFICATION
+        // ==========================================
+        function toggleReadmeModal() {
+            const modal = document.getElementById("readme-modal");
+            modal.classList.toggle("hidden");
+        }
+
+        function showToast(message, type = "success") {
+            const container = document.getElementById("toast-container");
+            const toast = document.createElement("div");
+            
+            let bgClass = "bg-slate-900 text-white";
+            let iconClass = "fa-solid fa-circle-check text-emerald-400";
+
+            if (type === "error") {
+                bgClass = "bg-red-900 text-white";
+                iconClass = "fa-solid fa-circle-xmark text-red-400";
+            } else if (type === "info") {
+                bgClass = "bg-slate-800 text-white";
+                iconClass = "fa-solid fa-circle-info text-blue-400";
+            }
+
+            toast.className = `${bgClass} px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 text-xs sm:text-sm font-medium transform transition-all duration-300 pointer-events-auto opacity-0 translate-y-2`;
+            toast.innerHTML = `
+                <i class="${iconClass} text-lg"></i>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            // Animate In
+            setTimeout(() => {
+                toast.classList.remove("opacity-0", "translate-y-2");
+            }, 10);
+
+            // Auto Remove
+            setTimeout(() => {
+                toast.classList.add("opacity-0", "translate-y-2");
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
