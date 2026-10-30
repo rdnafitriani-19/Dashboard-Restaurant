@@ -1,0 +1,59 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Dashboard Restoran</title>
+<style>
+:root{--bg:#faf6f0;--card:#fff;--ink:#2b2118;--mut:#6f6256;--line:#e8dfd3;--acc:#b8471f;--ok:#2f6b4f;--warn:#9a6208;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1a1512;--card:#241d18;--ink:#f3ebe1;--mut:#b0a294;--line:#3a3028;--acc:#e8825a;--ok:#6fc29a;--warn:#e0b25a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1a1512;--card:#241d18;--ink:#f3ebe1;--mut:#b0a294;--line:#3a3028;--acc:#e8825a;--ok:#6fc29a;--warn:#e0b25a;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
+header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:20px}
+h1{font:700 1.8rem/1.1 Georgia,"Times New Roman",serif;margin:0}h1 small{display:block;font:500 .85rem "Segoe UI",sans-serif;color:var(--mut);margin-top:4px}
+h2{font:700 1.1rem Georgia,serif;margin:0 0 12px}
+.seg{display:flex;border:1px solid var(--ink);border-radius:6px;overflow:hidden}
+.seg button{background:none;border:0;color:var(--ink);padding:8px 14px;font:inherit;cursor:pointer}.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+button:focus-visible{outline:3px solid var(--acc);outline-offset:-3px}
+.grid{display:grid;gap:14px}.kpis{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:14px}.two{grid-template-columns:2fr 1fr;margin-bottom:14px}.two2{grid-template-columns:3fr 2fr}
+@media(max-width:760px){.two,.two2{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;min-width:0}
+.k{color:var(--mut);font-size:.85rem;margin:0}.v{font:700 1.7rem Georgia,serif;margin:2px 0}.d{font-size:.85rem;margin:0;font-weight:600}.up{color:var(--ok)}.dn{color:var(--acc)}
+svg{width:100%;height:auto;display:block}svg text{fill:var(--mut);font:11px "Segoe UI",sans-serif}.bar{fill:var(--acc)}.grd{stroke:var(--line)}
+.row{display:grid;grid-template-columns:1fr 90px 40px;gap:8px;align-items:center;padding:6px 0;font-size:.95rem}.track{height:8px;background:var(--line);border-radius:4px;overflow:hidden}.track i{display:block;height:100%;background:var(--acc)}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.92rem}th,td{padding:8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}th{color:var(--mut);font-weight:600}
+.chip{padding:2px 10px;border-radius:12px;border:1px solid currentColor;font-size:.78rem;font-weight:600}.s-sel{color:var(--ok)}.s-pro{color:var(--warn)}.s-baru{color:var(--acc)}
+</style></head><body><div class="wrap">
+<header><h1>Dapur Nusantara<small>Dashboard restoran · data contoh</small></h1>
+<div class="seg" role="group" aria-label="Periode"><button data-p="h" aria-pressed="true">Hari ini</button><button data-p="w" aria-pressed="false">7 hari</button><button data-p="m" aria-pressed="false">30 hari</button></div></header>
+<section class="grid kpis" id="kpis" aria-live="polite"></section>
+<section class="grid two"><div class="card"><h2 id="ct">Omzet</h2><svg id="chart" viewBox="0 0 600 230" role="img" aria-label="Grafik omzet"></svg></div>
+<div class="card"><h2>Menu terlaris</h2><div id="top"></div></div></section>
+<section class="grid two2"><div class="card"><h2>Pesanan terbaru</h2><div class="tw"><table><thead><tr><th>#</th><th>Meja</th><th>Pesanan</th><th>Total</th><th>Status</th></tr></thead><tbody id="ord"></tbody></table></div></div>
+<div class="card"><h2>Stok bahan menipis</h2><div id="stk"></div></div></section>
+</div>
+<script>
+const rp=n=>'Rp '+Math.round(n).toLocaleString('id-ID');
+const P={
+ h:{t:'Omzet per jam (ribu Rp)',rev:4850000,ord:62,cov:'14/20',dl:[8.4,-2.1,5.0],m:1,
+  lb:['10','11','12','13','14','15','16','17','18','19','20'],v:[120,260,780,950,410,230,300,520,640,420,220]},
+ w:{t:'Omzet per hari (ribu Rp)',rev:31200000,ord:405,cov:'—',dl:[5.2,1.4,3.7],m:6.4,
+  lb:['Sen','Sel','Rab','Kam','Jum','Sab','Min'],v:[3800,3600,4100,4300,5200,6400,4900]},
+ m:{t:'Omzet per minggu (ribu Rp)',rev:128400000,ord:1672,cov:'—',dl:[11.8,3.9,7.6],m:26,
+  lb:['Mg 1','Mg 2','Mg 3','Mg 4'],v:[29800,31200,33100,34300]}};
+const menu=[['Nasi goreng spesial',48],['Sate ayam madura',41],['Rendang sapi',33],['Es teh manis',92],['Soto betawi',27]];
+const orders=[['A112','5','Nasi goreng ×2, es teh ×2',142000,'Baru'],['A111','2','Rendang ×1, nasi ×1',58000,'Diproses'],['A110','9','Sate ×3, lontong ×3',126000,'Diproses'],['A109','7','Soto betawi ×2',74000,'Selesai'],['A108','1','Gado-gado ×1, jus ×1',51000,'Selesai']];
+const stok=[['Daging sapi',4,'kg',22],['Beras',12,'kg',40],['Ayam fillet',6,'kg',30],['Minyak goreng',3,'L',25]];
+const cls={Baru:'s-baru',Diproses:'s-pro',Selesai:'s-sel'};
+function kpi(k,v,d){const c=d==null?'':`<p class="d ${d>=0?'up':'dn'}">${d>=0?'▲':'▼'} ${Math.abs(d)}% dari periode lalu</p>`;return `<div class="card"><p class="k">${k}</p><p class="v">${v}</p>${c}</div>`}
+function chart(lb,v){const W=600,H=230,L=40,B=26,T=10,mx=Math.max(...v)*1.1,bw=(W-L)/v.length;let s='';
+ for(let i=0;i<=3;i++){const y=T+(H-B-T)*i/3;s+=`<line class="grd" x1="${L}" x2="${W}" y1="${y}" y2="${y}"/><text x="${L-6}" y="${y+4}" text-anchor="end">${Math.round(mx*(1-i/3)).toLocaleString('id-ID')}</text>`}
+ v.forEach((x,i)=>{const h=(H-B-T)*x/mx,xx=L+i*bw+bw*.18;s+=`<rect class="bar" x="${xx}" y="${H-B-h}" width="${bw*.64}" height="${h}" rx="3"><title>${lb[i]}: ${x.toLocaleString('id-ID')} ribu</title></rect><text x="${xx+bw*.32}" y="${H-8}" text-anchor="middle">${lb[i]}</text>`});
+ document.getElementById('chart').innerHTML=s}
+function render(k){const p=P[k];
+ document.getElementById('kpis').innerHTML=kpi('Omzet',rp(p.rev),p.dl[0])+kpi('Jumlah pesanan',p.ord.toLocaleString('id-ID'),p.dl[1])+kpi('Rata-rata per pesanan',rp(p.rev/p.ord),p.dl[2])+(k==='h'?kpi('Meja terisi',p.cov):kpi('Pelanggan baru',Math.round(p.ord*.28).toLocaleString('id-ID'),p.dl[1]+2.3));
+ document.getElementById('ct').textContent=p.t;chart(p.lb,p.v);
+ const mx=menu[3][1]*p.m;document.getElementById('top').innerHTML=menu.map(([n,q])=>{const x=Math.round(q*p.m);return `<div class="row"><span>${n}</span><span class="track"><i style="width:${Math.min(100,x/mx*100)}%"></i></span><b>${x}</b></div>`}).join('');
+ document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===k))}
+document.getElementById('ord').innerHTML=orders.map(o=>`<tr><td>${o[0]}</td><td>${o[1]}</td><td>${o[2]}</td><td>${rp(o[3])}</td><td><span class="chip ${cls[o[4]]}">${o[4]}</span></td></tr>`).join('');
+document.getElementById('stk').innerHTML=stok.map(([n,q,u,m])=>`<div class="row"><span>${n}<br><small style="color:var(--mut)">sisa ${q} ${u}</small></span><span class="track"><i style="width:${q/m*100}%;background:${q/m<.2?'var(--acc)':'var(--warn)'}"></i></span><b>${Math.round(q/m*100)}%</b></div>`).join('');
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>render(b.dataset.p));
+render('h');
+</script></body></html>
